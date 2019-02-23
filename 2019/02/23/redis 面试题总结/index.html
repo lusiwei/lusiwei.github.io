@@ -1,0 +1,316 @@
+<!DOCTYPE html><html><head><meta name="generator" content="Hexo 3.8.0"><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>  · Hexo</title><meta name="description" content=" - John Doe"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://yoursite.com/atom.xml" title="Hexo"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/sunchongsheng" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/pinggod" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title"></h1><div class="post-info">Feb 23, 2019</div><div class="post-content"><h3 id="1-为什么使用Redis"><a href="#1-为什么使用Redis" class="headerlink" title="1. 为什么使用Redis?"></a>1. 为什么使用Redis?</h3><p>​    主要是从两个角度去考虑:<strong>性能</strong>和<strong>并发</strong>。当然，Redis还具备可以做分布式锁等其他功能，但是如果只是为了分布式锁这些其他功能，完全还有其他中间件(如Zookpeer等)代替,并不是非要使用Redis,因此,这个问题主要从性能和并发两个角度去答。</p>
+<ul>
+<li><p>性能</p>
+<p>我们在碰到需要执行耗时特别久，且结果不频繁变动的 SQL，就特别适合将运行结果放入缓存这样，后面的请求就去缓存中读取，使得请求能够<strong>迅速响应</strong>。</p>
+</li>
+<li><p>并发</p>
+<p>在大并发的情况下，所有的请求直接访问数据库，数据库会出现连接异常。这个时候，就需要使用redis做一个缓冲操作，让请求先访问到 Redis，而不是直接访问数据库。</p>
+</li>
+</ul>
+<h3 id="2．使用redis有什么缺点或者说redis常见项目问题"><a href="#2．使用redis有什么缺点或者说redis常见项目问题" class="headerlink" title="2．使用redis有什么缺点或者说redis常见项目问题"></a>2．使用redis有什么缺点或者说redis常见项目问题</h3><ul>
+<li>缓存和数据库双写一致性问题</li>
+<li>缓存雪崩问题</li>
+<li>缓存击穿问题</li>
+<li>缓存的并发竞争问题</li>
+</ul>
+<h3 id="3．单线程的redis为什么这么快"><a href="#3．单线程的redis为什么这么快" class="headerlink" title="3．单线程的redis为什么这么快"></a>3．单线程的redis为什么这么快</h3><ul>
+<li>纯内存操作</li>
+<li>单线程操作，避免了频繁的上下文切换</li>
+<li>采用了非阻塞IO多路复用机制</li>
+</ul>
+<h3 id="4-Redis的数据类型，以及每种数据类型的使用场景"><a href="#4-Redis的数据类型，以及每种数据类型的使用场景" class="headerlink" title="4. Redis的数据类型，以及每种数据类型的使用场景"></a>4. Redis的数据类型，以及每种数据类型的使用场景</h3><ul>
+<li><p>String<br>这个其实没啥好说的，最常规的set/get操作，value可以是String也可以是数字。一般做一些复杂的计数功能的缓存。</p>
+</li>
+<li><p>hash<br>这里value存放的是结构化的对象，比较方便的就是操作其中的某个字段。在做单点登录的时候，就是用这种数据结构存储用户信息，以cookieId作为key，设置30分钟为缓存过期时间，能很好的模拟出类似session的效果。</p>
+</li>
+<li><p>list<br>使用链表的数据结构，可以做简单的消息队列的功能。另外还有一个就是，可以利用lrange命令，做基于redis的分页功能，性能极佳，用户体验好。</p>
+<ul>
+<li>我们可以利用lists来实现一个消息队列，而且可以确保先后顺序，不必像MySQL那样还需要通过ORDER BY来进行排序。<ul>
+<li>利用LRANGE还可以很方便的实现分页的功能。</li>
+<li>在博客系统中，每片博文的评论也可以存入一个单独的list中</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>set<br>因为set堆放的是一堆不重复值的集合。所以可以做全局去重的功能。为什么不用JVM自带的Set进行去重？因为我们的系统一般都是集群部署，使用JVM自带的Set，比较麻烦，难道为了一个做一个全局去重，再起一个公共服务，太麻烦了。另外，就是利用交集、并集、差集等操作，可以计算共同喜好，全部的喜好，自己独有的喜好等功能。</p>
+<blockquote>
+<p>QQ有一个社交功能叫做“好友标签”，大家可以给你的好友贴标签，比如“大美女”、“土豪”、“欧巴”等等，这时就可以使用redis的集合来实现，把每一个用户的标签都存储在一个集合之中</p>
+</blockquote>
+</li>
+<li><p>sorted set<br>sorted set多了一个权重参数score,集合中的元素能够按score进行排列。可以做排行榜应用，取TOP N操作。可以做范围查找。</p>
+</li>
+</ul>
+<h3 id="5-redis的过期策略以及内存淘汰机制"><a href="#5-redis的过期策略以及内存淘汰机制" class="headerlink" title="5. redis的过期策略以及内存淘汰机制"></a><strong>5. redis的过期策略以及内存淘汰机制</strong></h3><ul>
+<li><p>分析</p>
+<p> 这个问题其实相当重要，到底redis有没用到家，这个问题就可以看出来。比如你redis只能存5G数据，可是你写了10G，那会删5G的数据。怎么删的，这个问题思考过么？还有，你的数据已经设置了过期时间，但是时间到了，内存占用率还是比较高，有思考过原因么?</p>
+</li>
+<li><p>回答:<br>redis采用的是定期删除+惰性删除策略。</p>
+<ul>
+<li><p><strong>为什么不用定时删除策略?</strong></p>
+<p>定时删除,用一个定时器来负责监视key,过期则自动删除。虽然内存及时释放，但是十分消耗CPU资源。在大并发请求下，CPU要将时间应用在处理请求，而不是删除key,因此没有采用这一策略.</p>
+</li>
+<li><p><strong>定期删除+惰性删除是如何工作的呢?</strong></p>
+<p>定期删除，Redis默认每个100ms检查，是否有过期的key,有过期key则删除。需要说明的是，Redis不是每个100ms将所有的key检查一次，而是随机抽取进行检查(如果每隔100ms,全部key进行检查，Redis岂不是卡死)。因此，如果只采用定期删除策略，会导致很多key到时间没有删除。于是，惰性删除派上用场。也就是说在你获取某个key的时候，Redis会检查一下，这个key如果设置了过期时间那么是否过期了？如果过期了此时就会删除。</p>
+</li>
+<li><p><strong>采用定期删除+惰性删除就没其他问题了么?</strong></p>
+<p>不是的，如果定期删除没删除key。然后你也没即时去请求key，也就是说惰性删除也没生效。这样，redis的内存会越来越高。那么就应该采用<strong>内存淘汰机制</strong>。<br>在redis.conf中有一行配置</p>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>maxmemory-policy volatile-lru</p>
+</blockquote>
+<ul>
+<li>该配置就是配内存淘汰策略的(什么，你没配过？好好反省一下自己)<ol>
+<li>noeviction：当内存不足以容纳新写入数据时，新写入操作会报错。<strong>应该没人用吧。</strong></li>
+<li>allkeys-lru：当内存不足以容纳新写入数据时，在键空间中，移除最近最少使用的key。<strong>推荐使用，多数项目在用这种。</strong></li>
+<li>allkeys-random：当内存不足以容纳新写入数据时，在键空间中，随机移除某个key。<strong>应该也没人用吧，你不删最少使用Key,去随机删。</strong></li>
+<li>volatile-lru：当内存不足以容纳新写入数据时，在设置了过期时间的键空间中，移除最近最少使用的key。<strong>这种情况一般是把redis既当缓存，又做持久化存储的时候才用。不推荐</strong></li>
+<li>volatile-random：当内存不足以容纳新写入数据时，在设置了过期时间的键空间中，随机移除某个key。<strong>依然不推荐</strong></li>
+<li>volatile-ttl：当内存不足以容纳新写入数据时，在设置了过期时间的键空间中，有更早过期时间的key优先移除。<strong>不推荐</strong><br>ps：如果没有设置 expire 的key, 不满足先决条件(prerequisites); 那么 volatile-lru, volatile-random 和 volatile-ttl 策略的行为, 和 noeviction(不删除) 基本上一致。</li>
+</ol>
+</li>
+</ul>
+<h3 id="6-redis和数据库双写一致性问题（难度大-问得多认真看）"><a href="#6-redis和数据库双写一致性问题（难度大-问得多认真看）" class="headerlink" title="6.redis和数据库双写一致性问题（难度大,问得多认真看）"></a><strong>6.redis和数据库双写一致性问题（难度大,问得多认真看）</strong></h3><p>现在只能保证最终一致性(下面有,就是key过期时间)，没法保证即时一致性,之前我们在项目中使用的流程是这样</p>
+<ol>
+<li><p>查询请求，先看redis中是否有，有就返回，没有就去数据库查询，然后放入redis</p>
+</li>
+<li><p>更新的时候先删除缓存在写入数据库</p>
+</li>
+</ol>
+<p>那么这儿有什么问题呢?</p>
+<ul>
+<li>先第一个问题: <strong>为什么是删除而不是更新缓存</strong>?</li>
+</ul>
+<ol>
+<li><p>如果你是一个写数据库场景比较多，而读数据场景比较少的业务需求，采用这种方案就会导致，数据压根还没读到，缓存就被频繁的更新，浪费性能。</p>
+</li>
+<li><p>如果你写入数据库的值，并不是直接写入缓存的，而是要经过一系列复杂的计算再写入缓存。那么，每次写入数据库后，都再次计算写入缓存的值，无疑是浪费性能的。显然，删除缓存更为适合问题</p>
+</li>
+</ol>
+<ul>
+<li><p>脏数据的可能</p>
+<ul>
+<li>线程A删除缓存</li>
+<li>线程A更新数据库</li>
+<li>线程B查询Redis没有进入数据库查询写入缓存<blockquote>
+<p>注意: 因为这里没有确定线程谁先执行，完全有可能在A删除缓存而还没有更新数据库时，线程B发现缓存中没有就去数据库查询，然后放入缓存，这个时候A在更新数据库，那么现在缓存中放入的就是修改前的数据，脏数据，后面来查询的都时得到脏数据(当然可以给数据设置一个过期时间，这个就是最终一致性问题),好吧其实到这儿大家把上面得问题想通，那么就够了，主要想不到这些问题，数据双写一致性没有百分之百得解决方案只能尽量减少发生得概率.我们的解决方案是这样的:</p>
+<blockquote>
+<p>先更新数据库，在删除缓存</p>
+</blockquote>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>问题: 一个请求A做查询操作，一个请求B做更新操作，那么会有如下情形产生</p>
+<ol>
+<li>缓存刚好失效</li>
+<li>请求A查询数据库，得一个旧值</li>
+<li>请求B将新值写入数据库</li>
+<li>请求B删除缓存</li>
+<li>请求A将查到的旧值写入缓存<br>ok，如果发生上述情况，确实是会发生脏数据。</li>
+</ol>
+</li>
+<li><p>然而，发生这种情况的概率又有多少呢？<br>   发生上述情况有一个先天性条件，就是步骤（3）的写数据库操作比步骤（2）的读数据库操作耗时更短，才有可能使得步骤（4）先于步骤（5）。可是，大家想想，数据库的读操作的速度远快于写操作的（不然做读写分离干嘛，做读写分离的意义就是因为读操作比较快，耗资源少），因此步骤（3）耗时比步骤（2）更短，这一情形很难出现。</p>
+</li>
+<li><p>解决问题:<br>首先4步可能失败那么即使不出现上述问题也会是脏数据,关于失败可以采用rabbitmq一直发送，至于rabbitmq如何保证消息百分之传递，在消息队列中学习其次出现上述A线程与B线程的问题,可以采用更新操作的B线程双删也就是做两次删除操作<br>伪代码: B线程    </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">b.updateDbxxxx  b更新数据库</span><br><span class="line">b.delete(redis)   B删除与更新数据相关的redis缓存</span><br><span class="line">b.sleep(xxx)	   B睡觉</span><br><span class="line">b.delete(redis)	   B再次删除</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>其中睡觉的时间，根据你自己的业务来确定,比如A需要从数据库查询到数据，然后经过一系列的计算，得到结果写入redis，那么这个时间就是A操作这一系列的时间，这个只能自己的业务不断测试得出时间安全值,那么问题又来了，如果sleep时间长就阻塞了增删改得效率,第二次删除可以起线程，或者用消息队列,当然如果数据库用得是主从复制那么，还需要加入主表到从表得更新时间，再然后第二次删除失败，参考上面得消息队列删除，没有百分之百的方案，希望大家理清除能跟面试官说到这儿已经很秀了，方向是线程安全，操作失败，效率等三方面去跟面试官讨论，当然还可以采用canal中间件订阅mysql得二进制日志binlog(了解)。</p>
+<h3 id="7-如何应对缓存穿透和缓存雪崩问题"><a href="#7-如何应对缓存穿透和缓存雪崩问题" class="headerlink" title="7. 如何应对缓存穿透和缓存雪崩问题"></a><strong>7. 如何应对缓存穿透和缓存雪崩问题</strong></h3><p>   如果有大并发的项目，流量有几百万左右。这两个问题一定要深刻考虑。</p>
+<ul>
+<li><p>缓存穿透</p>
+<blockquote>
+<p>即黑客故意去请求缓存中不存在的数据，导致所有的请求都怼到数据库上，从而数据库连接异常。</p>
+</blockquote>
+</li>
+<li><p>解决方案</p>
+<ol>
+<li><p>利用互斥锁，缓存失效的时候，先去获得锁，得到锁了，再去请求数据库。没得到锁，则休眠一段时间重试</p>
+</li>
+<li><p>提供一个能迅速判断请求是否有效的拦截机制，比如，利用布隆过滤器（就说只是了解, 布隆过滤器是一个神奇的数据结构，<strong>可以用来判断一个元素是否在一个集合中</strong>），内部维护一系列合法有效的key。迅速判断出，请求所携带的Key是否合法有效。如果不合法，则直接返回。</p>
+</li>
+<li>另外也有一个更为简单粗暴的方法，如果一个查询返回的数据为空（不管是数据不存在，还是系统故障），我们仍然把这个空结果进行缓存，value是过期时间,但它的过期时间会很短，最长不超过五分钟。通过这个直接设置的默认值存放到缓存，这样第二次到缓冲中获取就有值了，而不会继续访问数据库，这种办法最简单粗暴！</li>
+</ol>
+</li>
+<li><p>缓存雪崩</p>
+<blockquote>
+<p>即缓存同一时间大面积的失效，这个时候又来了一波请求，结果请求都怼到数据库上，从而导致数据库连接异常。什么redis重启，停电也会造成（采用集群，主从同步等保证安全性）</p>
+</blockquote>
+</li>
+<li><p>解决方案</p>
+<ol>
+<li><p>给缓存的失效时间，加上一个随机值，避免集体失效。</p>
+</li>
+<li><p>使用互斥锁，但是该方案吞吐量明显下降了。</p>
+</li>
+<li><p>双缓存。我们有两个缓存，缓存A和缓存B。缓存A的失效时间为20分钟，缓存B不设失效时间。自己做缓存预热操作。然后细分以下几个小点</p>
+<ul>
+<li><p>从缓存A读数据，有则直接返回</p>
+</li>
+<li><p>A没有数据，直接从B读数据，直接返回，并且异步启动一个更新线程。</p>
+</li>
+<li><p>更新线程同时更新缓存A和缓存B。</p>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><p>缓存预热</p>
+<blockquote>
+<p>缓存预热这个应该是一个比较常见的概念，相信很多小伙伴都应该可以很容易的理解，缓存预热就是系统上线后，将相关的缓存数据直接加载到缓存系统。这样就可以避免在用户请求的时候，先查询数据库，然后再将数据缓存的问题！用户直接查询事先被预热的缓存数据！</p>
+</blockquote>
+</li>
+<li><p>解决思路</p>
+<ol>
+<li><p>直接写个缓存刷新页面，上线时手工操作下；</p>
+</li>
+<li><p>数据量不大，可以在项目启动的时候自动进行加载；</p>
+</li>
+<li><p>定时刷新缓存；</p>
+</li>
+</ol>
+</li>
+</ul>
+<h3 id="8-如何解决redis的并发竞争问题（实例就是商城项目得定时订单删除）"><a href="#8-如何解决redis的并发竞争问题（实例就是商城项目得定时订单删除）" class="headerlink" title="8. 如何解决redis的并发竞争问题（实例就是商城项目得定时订单删除）"></a>8. 如何解决redis的并发竞争问题（实例就是商城项目得定时订单删除）</h3><p>这个问题大致就是，同时有多个子系统去set一个key。这个时候要注意什么呢？基本都是redis集群环境，做了数据分片操作。你一个事务中有涉及到多个key操作的时候，这多个key不一定都存储在同一个redis-server上。因此，<strong>redis的事务机制，十分鸡肋。</strong></p>
+<ul>
+<li>解决方案</li>
+</ul>
+<ol>
+<li><p>如果对这个key操作，<strong>不要求顺序</strong><br>这种情况下，准备一个分布式锁(查看第二个项目实现，必须掌握，考虑问题是死锁)，大家去抢锁，抢到锁就做set操作即可，比较简单。</p>
+</li>
+<li><p>如果对这个key操作，<strong>要求顺序</strong><br>假设有一个key1,系统A需要将key1设置为valueA,系统B需要将key1设置为valueB,系统C需要将key1设置为valueC.<br>期望按照key1的value值按照 valueA–&gt;valueB–&gt;valueC的顺序变化。这种时候我们在数据写入数据库的时候，需要保存一个时间戳。假设时间戳如下</p>
+<blockquote>
+<p>系统A key 1 {valueA  3:00}</p>
+<p>系统B key 1 {valueB  3:05}</p>
+<p>系统C key 1 {valueC  3:10}</p>
+</blockquote>
+<p>那么，假设这会系统B先抢到锁，将key1设置为{valueB 3:05}。接下来系统A抢到锁，发现自己的valueA的时间戳早于缓存中的时间戳，那就不做set操作了。以此类推。</p>
+</li>
+</ol>
+<h3 id="9．Redis持久化（能把大概概念说清楚"><a href="#9．Redis持久化（能把大概概念说清楚" class="headerlink" title="9．Redis持久化（能把大概概念说清楚)"></a>9．Redis持久化（能把大概概念说清楚)</h3><p>Redis提供了两种持久化的方式，分别是RDB（Redis DataBase）和AOF（Append Only File）。</p>
+<ul>
+<li><p>RDB，简而言之，就是在不同的时间点，将redis存储的数据生成快照并存储到磁盘等介质上；</p>
+</li>
+<li><p>AOF，则是换了一个角度来实现持久化，那就是将redis执行过的所有写指令记录下来，在下次redis重新启动时，只要把这些写指令从前到后再重复执行一遍，就可以实现数据恢复了。</p>
+</li>
+</ul>
+<p>其实RDB和AOF两种方式也可以同时使用，在这种情况下，如果redis重启的话，则会优先采用AOF方式来进行数据恢复，这是因为AOF方式的数据恢复完整度更高。如果你没有数据持久化的需求，也完全可以关闭RDB和AOF方式，这样的话，redis将变成一个纯内存数据库，就像memcache一样。 </p>
+<h3 id="10-RDB"><a href="#10-RDB" class="headerlink" title="10. RDB"></a>10. RDB</h3><p>RDB方式，是将redis某一时刻的数据持久化到磁盘中，是一种快照式的持久化方法。</p>
+<p>至于时间可以通过在redis.conf中配置下面得内容</p>
+<blockquote>
+<p>900秒（15分钟）内至少1个key值改变（则进行数据库保存–持久化）<br>300秒（5分钟）内至少10个key值改变（则进行数据库保存–持久化）<br>60秒（1分钟）内至少10000个key值改变（则进行数据库保存–持久化）<br>注释：注释掉“save”这一行配置项就可以让保存数据库功能失效。<br>你也可以通过增加一个只有一个空字符串的配置项（如下面的实例）来去掉前面的“save”配置。<br>save “”  </p>
+</blockquote>
+<p><img src="file:///C:\Users\lsw\AppData\Local\Temp\ksohtml\wps73C2.tmp.jpg" alt="img"> </p>
+<p>Redis在进行数据持久化的过程中，会先将数据写入到一个临时文件中，待持久化过程都结束了，才会用这个临时文件替换上次持久化好的文件。正是这种特性，让我们可以随时来进行备份，因为快照文件总是完整可用的。</p>
+<p>对于RDB方式，redis会单独创建（fork）一个子进程来进行持久化，而主进程是不会进行任何IO操作的，这样就确保了redis极高的性能。</p>
+<p>如果需要进行大规模数据的恢复，且对于数据恢复的完整性不是非常敏感，那RDB方式要比AOF方式更加的高效。虽然RDB有不少优点，但它的缺点也是不容忽视的。</p>
+<p>如果你对数据的完整性非常敏感，那么RDB方式就不太适合你，因为即使你每5分钟都持久化一次，当redis故障时，仍然会有近5分钟的数据丢失。所以，Redis还提供了另一种持久化方式，那就是AOF。手动代码实现rdb<br><img src="file:///C:\Users\lsw\AppData\Local\Temp\ksohtml\wps73D2.tmp.jpg" alt="img"> </p>
+<h3 id="11-AOF"><a href="#11-AOF" class="headerlink" title="11. AOF"></a>11. AOF</h3><p>AOF方式是将执行过的写指令记录下来，在数据恢复时按照从前到后的顺序再将指令都执行一遍，就这么简单。</p>
+<p>开启AOF也是在配置文件redis.conf中配置redis.conf中的appendonly yes就可以打开AOF功能:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#appendfsync always</span><br><span class="line">appendfsync everysec</span><br><span class="line">#appendfsync no</span><br></pre></td></tr></table></figure>
+<p>注:Always表示每次操作，everysec表示每秒(一般用这个),no </p>
+<p>默认使用的AOF持久化策略是每秒钟fsync一次（fsync是指把缓存中的写指令记录到磁盘中），因为在这种情况下，redis仍然可以保持很好的处理性能，即使redis故障，也只会丢失最近1秒钟的数据。</p>
+<p>因为采用了追加方式，如果不做任何处理的话，AOF文件会变得越来越大，为此，redis提供了AOF文件重写（rewrite）机制，即当AOF文件的大小超过所设定的阈值时，redis就会启动AOF文件的内容压缩，只保留可以恢复数据的最小指令集。举个例子或许更形象，假如我们调用了100次INCR指令，在AOF文件中就要存储100条指令，但这明显是很低效的，完全可以把这100条指令合并成一条SET指令，这就是重写机制的原理。</p>
+<p>在进行AOF重写时，仍然是采用先写临时文件，全部完成后再替换的流程，所以断电、磁盘满等问题都不会影响AOF文件的可用性，这点大家可以放心。</p>
+<p>AOF方式的另一个好处，我们通过一个“场景再现”来说明。某同学在操作redis时，不小心执行了FLUSHALL，导致redis内存中的数据全部被清空了，这是很悲剧的事情。不过这也不是世界末日，只要redis配置了AOF持久化方式，且AOF文件还没有被重写（rewrite），我们就可以用最快的速度暂停redis并编辑AOF文件，将最后一行的FLUSHALL命令删除，然后重启redis，就可以恢复redis的所有数据到FLUSHALL之前的状态了。是不是很神奇，这就是AOF持久化方式的好处之一。但是如果AOF文件已经被重写了，那就无法通过这种方法来恢复数据了。</p>
+<p>虽然优点多多，但AOF方式也同样存在缺陷，比如在同样数据规模的情况下，AOF文件要比RDB文件的体积大。而且，AOF方式的恢复速度也要慢于RDB方式。</p>
+<p>如果你直接执行BGREWRITEAOF命令，那么redis会生成一个全新的AOF文件，其中便包括了可以恢复现有数据的最少的命令集。</p>
+<p>如果运气比较差，AOF文件出现了被写坏的情况，也不必过分担忧，redis并不会贸然加载这个有问题的AOF文件，而是报错退出。这时可以通过以下步骤来修复出错的文件：</p>
+<ol>
+<li><p>备份被写坏的AOF文件</p>
+</li>
+<li><p>运行redis-check-aof –fix进行修复</p>
+</li>
+<li><p>用diff -u来看下两个文件的差异，确认问题点</p>
+</li>
+<li><p>重启redis，加载修复后的AOF文件 </p>
+</li>
+</ol>
+<p><strong>重写</strong>:</p>
+<p>AOF重写的内部运行原理，我们有必要了解一下。</p>
+<p>在重写即将开始之际，redis会创建（fork）一个“重写子进程”，这个子进程会首先读取现有的AOF文件，并将其包含的指令进行分析压缩并写入到一个临时文件中。</p>
+<p>与此同时，主工作进程会将新接收到的写指令一边累积到内存缓冲区中，一边继续写入到原有的AOF文件中，这样做是保证原有的AOF文件的可用性，避免在重写过程中出现意外。</p>
+<p>当“重写子进程”完成重写工作后，它会给父进程发一个信号，父进程收到信号后就会将内存中缓存的写指令追加到新AOF文件中。</p>
+<p>当追加结束后，redis就会用新AOF文件来代替旧AOF文件，之后再有新的写指令，就都会追加到新的AOF文件中了。所以读了那么多:</p>
+<p><strong>RDB和AOF的优缺点</strong></p>
+<ul>
+<li>RDB 优点：全量数据快照，文件小，恢复快</li>
+<li>RDB 缺点：无法保存最近一次快照之后的数据</li>
+<li>AOF 优点：可读性高，适合保存增量数据，数据不易丢失</li>
+<li>AOF 缺点：文件体积大，恢复时间长 </li>
+</ul>
+<p>最终采用得是RDB与AOF的混合持久化</p>
+<h3 id="12-redis主从复制"><a href="#12-redis主从复制" class="headerlink" title="12.redis主从复制"></a><strong>12.redis主从复制</strong></h3><p>​    主从复制, 是指将一台Redis服务器的数据，复制到其他的Redis服务器。前者称为主节点(master)，后者称为从节点(slave)；数据的复制是单向的，只能由主节点到从节点</p>
+<p>​    默认情况下，每台Redis服务器都是主节点；且一个主节点可以有多个从节点(或没有从节点)，但一个从节点只能有一个主节点。</p>
+<p><strong>主从复制的作用</strong></p>
+<ol>
+<li><p>数据冗余：主从复制实现了数据的热备份，是持久化之外的一种数据冗余方式。</p>
+</li>
+<li><p>故障恢复：当主节点出现问题时，可以由从节点提供服务，实现快速的故障恢复；实际上是一种服务的冗余。</p>
+</li>
+<li><p>负载均衡：在主从复制的基础上，配合读写分离，可以由主节点提供写服务，由从节点提供读服务（即写Redis数据时应用连接主节点，读Redis数据时应用连接从节点），分担服务器负载；尤其是在写少读多的场景下，通过多个从节点分担读负载，可以大大提高Redis服务器的并发量。</p>
+</li>
+<li><p>高可用基石：除了上述作用以外，主从复制还是哨兵和集群能够实施的基础，因此说主从复制是Redis高可用的基础。</p>
+</li>
+</ol>
+<p>配置网上都是教程自己以后去了解，这里不需要去了解，就说是运维配好了的,因为redis跟mysql不同 主从是redis提供的很简单，所以还是关注java代码实现 </p>
+<h3 id="13-什么是Sentinel？"><a href="#13-什么是Sentinel？" class="headerlink" title="13. 什么是Sentinel？"></a><strong>13.</strong> <strong>什么是Sentinel？</strong></h3><p>它是Redis提供的哨兵程序</p>
+<p>哨兵一般是好几个一起站岗，他们共同监视一个Master以及其Slaves。当哨兵看到Master挂掉了，他们就会互相确认有没有看走眼，一旦多数哨兵都说它挂了，那么他们就能得出结论：Master挂了。 </p>
+<p>此时第一个发现的Sentinel会负责进行自动故障迁移，它会立即在Slaves中选出一个担任Master，所有Slaves从属于新Master，所有客户端对Master的操作转而到这台新Master上。</p>
+<p>Sentinel的主要工作如下：</p>
+<ol>
+<li><p>监控（Monitoring）： Sentinel 会不断地检查你的主服务器和从服务器是否运作正常。</p>
+</li>
+<li><p>提醒（Notification）： 当被监控的某个 Redis 服务器出现问题时， Sentinel 可以通过 API 向管理员或者其他应用程序发送通知。</p>
+</li>
+<li><p>自动故障迁移（Automatic failover):  当一个主服务器不能正常工作时， Sentinel 会开始一次自动故障迁移操作， 它会将失效主服务器的其中一个从服务器升级为新的主服务器， 并让失效主服务器的其他从服务器改为复制新的主服务器； 当客户端试图连接失效的主服务器时， 集群也会向客户端返回新主服务器的地址， 使得集群可以使用新主服务器代替失效服务器。</p>
+</li>
+</ol>
+<p>同样也不去花时间配置了，那么主从加哨兵的java代码如下:</p>
+<h3 id="14-Redis事务-了解"><a href="#14-Redis事务-了解" class="headerlink" title="14. Redis事务(了解)"></a>14. Redis事务(了解)</h3><p>在聊redis事务处理之前，要先和大家介绍四个redis指令，即MULTI、EXEC、DISCARD、WATCH。这四个指令构成了redis事务处理的基础。</p>
+<ol>
+<li>MULTI用来组装一个事务；</li>
+<li>EXEC用来执行一个事务；</li>
+<li>DISCARD用来取消一个事务；</li>
+<li>WATCH用来监视一些key，一旦这些key在事务执行之前被改变，则取消事务的执行。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">redis&gt; MULTI //标记事务开始</span><br><span class="line">OK</span><br><span class="line">redis&gt; INCR user_id //多条命令按顺序入队</span><br><span class="line">QUEUED</span><br><span class="line">redis&gt; INCR user_id</span><br><span class="line">QUEUED</span><br><span class="line">redis&gt; INCR user_id</span><br><span class="line">QUEUED</span><br><span class="line">redis&gt; PING</span><br><span class="line">QUEUED</span><br><span class="line">redis&gt; EXEC //执行</span><br><span class="line">1) (integer) 1</span><br><span class="line">2) (integer) 2</span><br><span class="line">3) (integer) 3</span><br><span class="line">4) PONG</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>在上面的例子中，我们看到了QUEUED的字样，这表示我们在用MULTI组装事务时，每一个命令都会进入到内存队列中缓存起来，如果出现QUEUED则表示我们这个命令成功插入了缓存队列，在将来执行EXEC时，这些被QUEUED的命令都会被组装成一个事务来执行。</p>
+<h3 id="15-如何从海量数据查询某一前缀的key-一亿查20万"><a href="#15-如何从海量数据查询某一前缀的key-一亿查20万" class="headerlink" title="15. 如何从海量数据查询某一前缀的key(一亿查20万)"></a>15. 如何从海量数据查询某一前缀的key(一亿查20万)</h3><p>keys<em> 会返回所有匹配的key,数据量过大的情况下会造成服务卡顿、阻塞服务器,可以用scan命令来代替keys</em><br>命令: SCAN cursor [MATCH pattern] [COUNT count]<br>Cursor:游标</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">redis 127.0.0.1:6379&gt; scan 0</span><br><span class="line">1) &quot;17&quot;      -----第一个值   作为下次的游标</span><br><span class="line">2)  1) &quot;key:12&quot;    </span><br><span class="line">	2) &quot;key:8&quot;    </span><br><span class="line">	3) &quot;key:4&quot;    </span><br><span class="line">	4) &quot;key:14&quot;    </span><br><span class="line">	5) &quot;key:16&quot;    </span><br><span class="line">	6) &quot;key:17&quot;    </span><br><span class="line">	7) &quot;key:15&quot;    </span><br><span class="line">	8) &quot;key:10&quot;    </span><br><span class="line">	9) &quot;key:3&quot;   </span><br><span class="line">	10) &quot;key:7&quot;   </span><br><span class="line">	11) &quot;key:1&quot;</span><br><span class="line">redis 127.0.0.1:6379&gt; scan 17</span><br><span class="line">1) &quot;0&quot;</span><br><span class="line">2) 1) &quot;key:5&quot;  </span><br><span class="line">   2) &quot;key:18&quot;   </span><br><span class="line">   3) &quot;key:0&quot;   </span><br><span class="line">   4) &quot;key:2&quot;   </span><br><span class="line">   5) &quot;key:19&quot;   </span><br><span class="line">   6) &quot;key:13&quot;   </span><br><span class="line">   7) &quot;key:6&quot;   </span><br><span class="line">   8) &quot;key:9&quot;   </span><br><span class="line">   9) &quot;key:11&quot;</span><br></pre></td></tr></table></figure>
+<p>SCAN命令的返回值 是一个包含两个元素的数组， 第一个数组元素是用于进行下一次迭代的新游标， 而第二个数组元素则又是一个数组， 这个数组中包含了所有被迭代的元素。</p>
+<p>注意：返回的游标不一定是递增的，可能后一次返回的游标比前一次的小。</p>
+<p>在第二次调用 SCAN 命令时， 命令返回了游标 0 ， 这表示迭代已经结束， 整个数据集已经被完整遍历过了</p>
+<p>SCAN增量式迭代命令并不保证每次执行都返回某个给定数量的元素,甚至可能会返回零个元素， 但只要命令返回的游标不是 0 ， 应用程序就不应该将迭代视作结束 </p>
+<p>Count:</p>
+<p>对于增量式迭代命令不保证每次迭代所返回的元素数量，我们可以使用COUNT选项， 对命令的行为进行一定程度上的调整。COUNT 选项的作用就是让用户告知迭代命令， 在每次迭代中应该从数据集里返回多少元素。使用COUNT 选项对于对增量式迭代命令相当于一种提示， 大多数情况下这种提示都比较有效的控制了返回值的数量。</p>
+<p>注意:COUNT选项并不能严格控制返回的key数量，只能说是一个大致的约束。并非每次迭代都要使用相同的 COUNT 值，用户可以在每次迭代中按自己的需要随意改变 COUNT 值， 只要记得将上次迭代返回的游标用到下次迭代里面就可以了。</p>
+<p>Match:匹配规则</p>
+<p>scan 0 match key1* count 10</p>
+<p>表示从头开始 扫描10个 key为key1开头的key</p>
+<h3 id="16-常用命令：（记常用的，简单好记的）"><a href="#16-常用命令：（记常用的，简单好记的）" class="headerlink" title="16.常用命令：（记常用的，简单好记的）"></a><strong>16.常用命令：（记常用的，简单好记的）</strong></h3><ul>
+<li><p>String:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">set key value  </span><br><span class="line">get key </span><br><span class="line">del key </span><br><span class="line">mset key value [key value...]  --批量设置键值</span><br><span class="line">mget key [key...]  --批量获取键值</span><br><span class="line">incr key </span><br><span class="line">decr key</span><br><span class="line">incrby key increment </span><br><span class="line">decrby key decrement</span><br><span class="line">incrbyfloat key increment</span><br><span class="line">getset key</span><br><span class="line">append key value --如果key值存在则在key后面追加字符，不存在则创建</span><br><span class="line">strlen key</span><br><span class="line">setrange key offset value --设置指定位置字符</span><br><span class="line">getrange key start end --获取部分字符串</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Hash</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">hset key field value</span><br><span class="line">hsetnx key field value --原key的field不存在则set成功，否则失败</span><br><span class="line">hget key field</span><br><span class="line">hdel key field</span><br><span class="line">hgetall key</span><br><span class="line">hlen key</span><br><span class="line">hmget key  field [field...]</span><br><span class="line">hmset key filed value [field value...]</span><br><span class="line">hkeys key</span><br><span class="line">hvals key</span><br><span class="line">hexists key field</span><br><span class="line">hincrby key field</span><br><span class="line">hincrbyfloat key field</span><br><span class="line">hstrlen key field</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>List</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">lpush key value [value...]</span><br><span class="line">rpush key value [value...]</span><br><span class="line">lpop key </span><br><span class="line">rpop key</span><br><span class="line">lrange key start end</span><br><span class="line">llen key</span><br><span class="line">lset key index value</span><br><span class="line">blpop key [key...] timeout--左侧阻塞式弹出</span><br><span class="line">brpop key [key...] timeout --右侧阻塞式弹出</span><br><span class="line">lindex key index   --获取对应index的value</span><br><span class="line">linsert key before|after pivot value   --在&apos;pivot&apos;这个元素之前(before)或之后(after)插入一个值</span><br><span class="line">lset key index value  </span><br><span class="line">ltrim key start end --按照索引范围剪裁列表 如 ltrim list 1 3  就是保留列表第二到第四个元素</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Set</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">sadd key element [element...]</span><br><span class="line">srem key element [element...]</span><br><span class="line">smembers key  --查看集合所有的元素</span><br><span class="line">sismember key element --查看元素是否属于该集合</span><br><span class="line">scard key  --查看集合元素数量</span><br><span class="line">srandmember key --随机获取集合中某一个元素</span><br><span class="line">spop key</span><br><span class="line">sinter key [key...]</span><br><span class="line">sdiff key [key...]</span><br><span class="line">sunion key [key...]</span><br><span class="line">sinterstore destination  key [key...]</span><br><span class="line">sdiffstore destination key [key]</span><br><span class="line">sunionstore destination key [key...]</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Zset</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">zadd key score member [score member]</span><br><span class="line">zrem key member</span><br><span class="line">zcard key</span><br><span class="line">zscore key member</span><br><span class="line">zrank key member</span><br><span class="line">zrevrank key member</span><br><span class="line">zincrby key increment member</span><br><span class="line">zrange key start end [withscores]</span><br><span class="line">zrevrange key start end [withscores]</span><br><span class="line">zrangebyscore key min max [withscores]</span><br><span class="line">zrevrangebyscore key max min [withscores]</span><br><span class="line">zcount key min max   ##所有的min max 支持开区间闭区间，并且 -inf代表无穷小+inf代表无穷大##</span><br><span class="line">zremrangebyscore key min max    ##如 zrangebyscore score:rank  (80 +inf ##</span><br><span class="line">zremrangebyrank key start end   ##代表查找score:rank这个有序集合中大于80分的成员##</span><br><span class="line">zinterstore destination numkeys key [key...]  --这里numkeys表示需要做交集的key的个数</span><br><span class="line">zunionstore destination numkeys key [key...]  --这里numkeys代表需要做并集的key的个数</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>系统命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">keys pattern --查找满足pattern正则表达的key，如 keys * 表示所有的键 </span><br><span class="line">dbsize --redis中所有的键的数量</span><br><span class="line">rename key newkey --对键重命名，若newkey已经存在于redis中则覆盖,并删除原来的key</span><br><span class="line">renamenx key newkey --当newkey不存在时才操作成功</span><br><span class="line">randomkey --随机返回一个key</span><br><span class="line">expire key second --key在second秒之后失效</span><br><span class="line">expireat key timestamp  -- timestamp代表秒级别的时间戳</span><br><span class="line">pexpire key milliseconds --key 在 milliseconds 毫秒后过期</span><br><span class="line">pexpireat key milliseconds-timestamp --key 在 milliseconds-timestamp毫秒级别的时间戳后失效</span><br><span class="line">scan key cusor [match pattern] [COUNT count] </span><br><span class="line">hscan key cusor [match pattern] [COUNT count] --hash类型渐进式遍历</span><br><span class="line">sscan key cusor [match pattern] [COUNT count] --set类型渐进式遍历</span><br><span class="line">zscan key cusor [match pattern] [COUNT count] --sortedSet类型渐进式遍历</span><br><span class="line">select dbIndex --切换数据库</span><br><span class="line">#########迁移键############</span><br><span class="line">move key db --将key迁移到db中去</span><br><span class="line">dump key --将key序列化，RDB格式</span><br><span class="line">resotre key ttl value --将序列化的值复原 ttl代表过期时间，若ttl为0则代表永久有效</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="17-一致性hash算法"><a href="#17-一致性hash算法" class="headerlink" title="17. 一致性hash算法"></a><strong>17. 一致性hash算法</strong></h3><p>这个讲过不懂得问,记住顺时针与虚拟节点等概念</p>
+<p><img src="file:///C:\Users\lsw\AppData\Local\Temp\ksohtml\wps73F4.tmp.jpg" alt="img"> </p>
+<h3 id="所有得java代码实现在接下来得项目中实操"><a href="#所有得java代码实现在接下来得项目中实操" class="headerlink" title="所有得java代码实现在接下来得项目中实操"></a><strong>所有得java代码实现在接下来得项目中实操</strong></h3></div></article></div></main><footer><div class="paginator"><a href="/2019/02/23/3-1 数据库架构/" class="prev">上一篇</a><a href="/2019/02/23/jvm重点/" class="next">下一篇</a></div><div class="copyright"><p>© 2015 - 2019 <a href="http://yoursite.com">John Doe</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
