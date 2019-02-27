@@ -16,7 +16,7 @@
 <p>参考链接：<a href="http://www.runoob.com/docker/docker-run-command.html" target="_blank" rel="noopener">http://www.runoob.com/docker/docker-run-command.html</a></p>
 </li>
 <li><p>启动storage</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --name storage \</span><br><span class="line">--net=host \</span><br><span class="line">-e TRACKER_IP=&lt;your tracker server address&gt;:22122 \</span><br><span class="line">-e GROUP_NAME=&lt;group name&gt; \</span><br><span class="line">morunchang/fastdfs sh storage.sh</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --name storage \</span><br><span class="line">--net=host \</span><br><span class="line">-e TRACKER_IP=&lt;your tracker server address&gt;:22122 \</span><br><span class="line">-e GROUP_NAME=&lt;group name&gt; \</span><br><span class="line">morunchang/fastdfs sh storage.sh</span><br></pre></td></tr></table></figure>
 <ul>
 <li>\ 为命令行中换行符</li>
 <li>-e: 设置环境变量</li>
@@ -24,10 +24,10 @@
 </ul>
 </li>
 <li><p>查看容器信息</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker ps</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker ps</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>进入容器内部</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker exec -it storage /bin/bash</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker <span class="built_in">exec</span> -it storage /bin/bash</span><br></pre></td></tr></table></figure>
 <ul>
 <li>exec : 在运行的容器中执行命令</li>
 <li>-i: 即使没有附加也保持STDIN 打开</li>
@@ -35,7 +35,7 @@
 </ul>
 </li>
 <li><p>用vim编辑nginx配置文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim /data/nginx/conf/nginx.conf</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim /data/nginx/conf/nginx.conf</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>在server里添加如下内容</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">location /&lt;group1&gt;/M00 &#123;</span><br><span class="line">   proxy_next_upstream http_502 http_504 error timeout invalid_header;</span><br><span class="line">     proxy_cache http-cache;</span><br><span class="line">     proxy_cache_valid  200 304 12h;</span><br><span class="line">     proxy_cache_key $uri$is_args$args;</span><br><span class="line">     proxy_pass http://fdfs_group1;</span><br><span class="line">     expires 30d;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
@@ -44,10 +44,10 @@
 </ul>
 </li>
 <li><p>退出伪终端</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">exit</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">exit</span></span><br></pre></td></tr></table></figure>
 </li>
 <li><p>重启storage服务</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker restart storage</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker restart storage</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>完成环境的搭建</p>
 </li>
