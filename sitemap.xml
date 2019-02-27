@@ -2,23 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://yoursite.com/2019/02/27/Docker%E5%AE%89%E8%A3%85FastDFS/</loc>
-    
-    <lastmod>2019-02-27T13:07:07.200Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>http://yoursite.com/2019/02/23/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/</loc>
     
-    <lastmod>2019-02-23T12:45:48.959Z</lastmod>
+    <lastmod>2019-02-27T13:28:09.857Z</lastmod>
     
   </url>
   
   <url>
     <loc>http://yoursite.com/2019/02/23/redis%20%E9%9D%A2%E8%AF%95%E9%A2%98%E6%80%BB%E7%BB%93/</loc>
     
-    <lastmod>2019-02-23T07:03:22.465Z</lastmod>
+    <lastmod>2019-02-27T13:20:41.008Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://yoursite.com/2019/02/23/jvm%E9%87%8D%E7%82%B9/</loc>
+    
+    <lastmod>2019-02-27T13:20:02.061Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://yoursite.com/2019/02/27/Docker%E5%AE%89%E8%A3%85FastDFS/</loc>
+    
+    <lastmod>2019-02-27T13:09:09.076Z</lastmod>
     
   </url>
   
@@ -26,13 +33,6 @@
     <loc>http://yoursite.com/2019/02/22/hello-world/</loc>
     
     <lastmod>2019-02-22T15:18:16.658Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://yoursite.com/2019/02/23/jvm%E9%87%8D%E7%82%B9/</loc>
-    
-    <lastmod>2019-02-21T03:12:44.087Z</lastmod>
     
   </url>
   
