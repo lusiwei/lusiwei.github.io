@@ -14,9 +14,10 @@
 <li>缓存的并发竞争问题</li>
 </ul>
 <h3 id="3．单线程的redis为什么这么快"><a href="#3．单线程的redis为什么这么快" class="headerlink" title="3．单线程的redis为什么这么快"></a>3．单线程的redis为什么这么快</h3><ul>
-<li>纯内存操作</li>
+<li>纯内存操作,执行效率高</li>
+<li>数据结构简单，对数据的操作也简单</li>
 <li>单线程操作，避免了频繁的上下文切换</li>
-<li>采用了非阻塞IO多路复用机制</li>
+<li>采用了多路I/O复用模型，非阻塞IO</li>
 </ul>
 <h3 id="4-Redis的数据类型，以及每种数据类型的使用场景"><a href="#4-Redis的数据类型，以及每种数据类型的使用场景" class="headerlink" title="4. Redis的数据类型，以及每种数据类型的使用场景"></a>4. Redis的数据类型，以及每种数据类型的使用场景</h3><ul>
 <li><p>String<br>这个其实没啥好说的，最常规的set/get操作，value可以是String也可以是数字。一般做一些复杂的计数功能的缓存。</p>
@@ -40,7 +41,7 @@
 <li><p>sorted set<br>sorted set多了一个权重参数score,集合中的元素能够按score进行排列。可以做排行榜应用，取TOP N操作。可以做范围查找。</p>
 </li>
 </ul>
-<h3 id="5-redis的过期策略以及内存淘汰机制"><a href="#5-redis的过期策略以及内存淘汰机制" class="headerlink" title="5. redis的过期策略以及内存淘汰机制"></a><strong>5. redis的过期策略以及内存淘汰机制</strong></h3><ul>
+<h3 id="5-Redis的过期策略以及内存淘汰机制"><a href="#5-Redis的过期策略以及内存淘汰机制" class="headerlink" title="5. Redis的过期策略以及内存淘汰机制"></a><strong>5. Redis的过期策略以及内存淘汰机制</strong></h3><ul>
 <li><p>分析</p>
 <p> 这个问题其实相当重要，到底redis有没用到家，这个问题就可以看出来。比如你redis只能存5G数据，可是你写了10G，那会删5G的数据。怎么删的，这个问题思考过么？还有，你的数据已经设置了过期时间，但是时间到了，内存占用率还是比较高，有思考过原因么?</p>
 </li>
@@ -313,4 +314,4 @@
 </ul>
 <h3 id="17-一致性hash算法"><a href="#17-一致性hash算法" class="headerlink" title="17. 一致性hash算法"></a><strong>17. 一致性hash算法</strong></h3><p>这个讲过不懂得问,记住顺时针与虚拟节点等概念</p>
 <p><img src="file:///C:\Users\lsw\AppData\Local\Temp\ksohtml\wps73F4.tmp.jpg" alt="img"> </p>
-<h3 id="所有得java代码实现在接下来得项目中实操"><a href="#所有得java代码实现在接下来得项目中实操" class="headerlink" title="所有得java代码实现在接下来得项目中实操"></a><strong>所有得java代码实现在接下来得项目中实操</strong></h3></div></article></div></main><footer><div class="paginator"><a href="/2019/02/23/3-1 数据库架构/" class="prev">上一篇</a><a href="/2019/02/23/jvm重点/" class="next">下一篇</a></div><div class="copyright"><p>© 2015 - 2019 <a href="http://yoursite.com">John Doe</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
+</div></article></div></main><footer><div class="paginator"><a href="/2019/02/23/3-1 数据库架构/" class="prev">PREV</a><a href="/2019/02/23/jvm重点/" class="next">NEXT</a></div><div class="copyright"><p>© 2015 - 2019 <a href="http://yoursite.com">John Doe</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
