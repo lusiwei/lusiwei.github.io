@@ -7,8 +7,54 @@
 <li><p>通过mail完成邮件的发送<br>防止成为垃圾邮件，披上outlook的马甲</p>
 </li>
 <li><p>通过过滤器，cookie及session技术完成用户的登陆拦截，自动登陆，记住密码等功能，   domain path,持久化过期时间maxAge的设置 </p>
+</li>
+<li><p>通过ThreadLocal 线程副本将用户信息传递到业务层，完成操作的记录(记得在拦截器的afterCompletion中释放ThreadLocal资源)</p>
+</li>
+<li><p>通过hibernate-validator 工具，完成校验工具类，完成对参数的校验</p>
+</li>
+<li><p>完成拦截器对用户url的拦截，用户的权限缓存到redis中，在拦截器的preHandle中通过request.getRequestUri 取出用户的url，与redis中的进行比对，判断有无权限</p>
+</li>
+<li><p>完成jedisUtil，jsonUtil ,ThreadLocalUtil 等工具类的封装</p>
+</li>
+<li><p>通过mybatis的翻页插件完成翻页</p>
+</li>
+<li><p>完成角色，用户，权限模块增删改及树结构翻页条件查询等接口的开发</p>
+</li>
+<li><p>完成操作记录及还原接口的开发</p>
+</li>
+<li><p>完成项目的统一异常处理（SpringMvc同意异常处理）</p>
+</li>
+</ol>
+<h4 id="小商城项目"><a href="#小商城项目" class="headerlink" title="小商城项目"></a>小商城项目</h4><p>Cart:购物车表</p>
+<p><img src="../image/wps1.jpg" alt="img">    </p>
+<p>商品分类:(树结构)</p>
+<p><img src="../image/wps2.jpg" alt="img"> </p>
+<p>商品表:</p>
+<p><img src="../image/wps3.jpg" alt="img"> </p>
+<p>订单表:</p>
+<p><img src="../image/wps4.jpg" alt="img"> </p>
+<p>订单项表:</p>
+<p><img src="../image/wps5.jpg" alt="img"> </p>
+<p>支付表:</p>
+<p><img src="../image/wps6.jpg" alt="img"> </p>
+<p>用户表:</p>
+<p><img src="../image/wps7.jpg" alt="img"> </p>
+<p>收件表:</p>
+<p><img src="../image/wps8.jpg" alt="img"> </p>
+<h5 id="完成功能"><a href="#完成功能" class="headerlink" title="完成功能:"></a>完成功能:</h5><ol>
+<li><p>完成商品图片的fastdfs存储</p>
+<p>FastDFS：（必须看）不用去看vsftpd了</p>
+<p><a href="https://blog.csdn.net/zhengzhaoyang122/article/details/82782604" target="_blank" rel="noopener">https://blog.csdn.net/zhengzhaoyang122/article/details/82782604</a></p>
+</li>
+<li><p>完成购物车模块（商品价格加入后商品价格改变情况，购物车与订单的价格按照加入的时候算）</p>
 <ul>
-<li>domain表示的是cookie所在的域，默认为请求的地址，如网址为<figure class="highlight plain"><figcaption><span>```t1.test.com```，域B为``` t2.test.com```，那么在域A生产一个令域A和域B都能访问的cookie就要将该cookie的domain设置为```.test.com```；如果要在域A生产一个令域A不能访问而域B能访问的cookie就要将该cookie的domain设置为```t2.test.com```.</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line">	* path表示cookie所在的目录，asp.net默认为/，就是根目录。在同一个服务器上有目录如下：```/test/```,```/test/cd/```,```/test/dd/```，现设一个cookie1的path为```/test/```，cookie2的path为```/test/cd/```，那么test下的所有页面都可以访问到cookie1，而```/test/```和```/test/dd/```的子页面不能访问**cookie2**。这是因为cookie能让其path路径下的页面访问</span><br><span class="line"></span><br><span class="line">3. 通过ThreadLocal 线程副本将用户信息传递到业务层，完成操作的记录(记得在拦截器的afterCompletion中释放ThreadLocal资源)</span><br><span class="line"></span><br><span class="line">4. 通过hibernate-validator 工具，完成校验工具类，完成对参数的校验</span><br><span class="line"></span><br><span class="line">5. 完成拦截器对用户url的拦截，用户的权限缓存到redis中，在拦截器的preHandle中通过request.getRequestUri 取出用户的url，与redis中的进行比对，判断有无权限</span><br><span class="line"></span><br><span class="line">6. 完成jedisUtil，jsonUtil ,ThreadLocalUtil 等工具类的封装</span><br><span class="line"></span><br><span class="line">7. 通过mybatis的翻页插件完成翻页</span><br><span class="line"></span><br><span class="line">8. 完成角色，用户，权限模块增删改及树结构翻页条件查询等接口的开发</span><br><span class="line"></span><br><span class="line">9. 完成操作记录及还原接口的开发</span><br><span class="line"></span><br><span class="line">10. 完成项目的统一异常处理（SpringMvc同意异常处理）</span><br><span class="line"></span><br><span class="line">#### 小商城项目</span><br><span class="line"></span><br><span class="line">Cart:购物车表</span><br><span class="line"></span><br><span class="line">![img](../image/wps1.jpg)	</span><br><span class="line"></span><br><span class="line">商品分类:(树结构)</span><br><span class="line"></span><br><span class="line">![img](../image/wps2.jpg) </span><br><span class="line"></span><br><span class="line">商品表:</span><br><span class="line"></span><br><span class="line">![img](../image/wps3.jpg) </span><br><span class="line"></span><br><span class="line">订单表:</span><br><span class="line"></span><br><span class="line">![img](../image/wps4.jpg) </span><br><span class="line"></span><br><span class="line">订单项表:</span><br><span class="line"></span><br><span class="line">![img](../image/wps5.jpg) </span><br><span class="line"></span><br><span class="line">支付表:</span><br><span class="line"></span><br><span class="line">![img](../image/wps6.jpg) </span><br><span class="line"></span><br><span class="line">用户表:</span><br><span class="line"></span><br><span class="line">![img](../image/wps7.jpg) </span><br><span class="line"></span><br><span class="line">收件表:</span><br><span class="line"></span><br><span class="line">![img](../image/wps8.jpg) </span><br><span class="line"></span><br><span class="line"></span><br><span class="line">##### 完成功能:</span><br><span class="line"></span><br><span class="line">1. 完成商品图片的fastdfs存储</span><br><span class="line"></span><br><span class="line">   FastDFS：（必须看）不用去看vsftpd了</span><br><span class="line"></span><br><span class="line">   &lt;https://blog.csdn.net/zhengzhaoyang122/article/details/82782604&gt;</span><br><span class="line"></span><br><span class="line">2. 完成购物车模块（商品价格加入后商品价格改变情况，购物车与订单的价格按照加入的时候算）</span><br><span class="line"></span><br><span class="line">   * 每个购物车项对应一个商品，主要是商品数量与商品单价存储，最后在根据这两个算出总价格，避免精度丢失采用bigDecimal高精度</span><br><span class="line"></span><br><span class="line">   * 商品库存，采用加入后就减少库存</span><br><span class="line"></span><br><span class="line">   * 通过定时任务完成购物车的清空（springScheduled需要说出来）cron表达式需要掌握</span><br><span class="line"></span><br><span class="line">     ```java</span><br><span class="line">     @Component</span><br><span class="line">     public class TimerWork&#123;</span><br><span class="line">         @Autowired</span><br><span class="line">         private OrderService orderService;</span><br><span class="line">         @Scheduled(cron=&quot;0/30 * * * * ?&quot;)</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>每个购物车项对应一个商品，主要是商品数量与商品单价存储，最后在根据这两个算出总价格，避免精度丢失采用bigDecimal高精度</p>
+</li>
+<li><p>商品库存，采用加入后就减少库存</p>
+</li>
+<li><p>通过定时任务完成购物车的清空（springScheduled需要说出来）cron表达式需要掌握</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TimerWork</span></span>&#123;</span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> OrderService orderService;</span><br><span class="line">    <span class="meta">@Scheduled</span>(cron=<span class="string">"0/30 * * * * ?"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
 </ul>
 </li>
 </ol>
